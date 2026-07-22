@@ -1,4 +1,4 @@
-from main import notes 
+#from main import notes 
 class NoteError(Exception):
     """Base Exception for all the Note Errors"""
     pass

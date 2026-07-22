@@ -18,10 +18,19 @@ def save_notes(notes:list) -> None:
     with open(NOTES_FILE,"w") as f:
        json.dump(notes,f,indent=2)
 
+def add_note_flexible(notes,title,text, **extra_fields) ->list:
+    note={        
+        "id":len(notes)+1,
+        "title":title,
+        "text":text
+        }
+    note.update(extra_fields)
+    notes.append(note)
+    return notes
 
-def delete_notes_by_id(noteId: int) -> None:
+def delete_notes_by_id(noteId: int,notes : list) -> list:
     """Delete the Notes by it's Id"""
-    notes=load_notes()
+    #notes=load_notes()
 
     try:
        delete_note=next(n for n in notes if n["id"]==noteId)
@@ -31,24 +40,34 @@ def delete_notes_by_id(noteId: int) -> None:
     
     else:
        notes.remove(delete_note)
-       save_notes(notes)
-       print(f"Notes Deleted with the ID:{noteId}")
+       #save_notes(notes)
+       #print(f"Notes Deleted with the ID:{noteId}")
+       return notes
 
     finally:
        print("Notes Deletion process closed")
 
+def search_notes(keyword : str,notes: list ) -> list | None :
+     """returns all the matches if the keyword in Title or text"""
+     keyword_lower=keyword.lower()
+     return [
+          note for note in notes
+          if keyword_lower in note["title"].lower() or keyword_lower in note["text"] 
+     ]
     #return delete_note
 
-notes={
-    "id":3,
-    "title":"AI",
-    "text":"AI is an powerfull tool"
-}     
+#notes={
+#    "id":3,
+#    "title":"AI",
+#    "text":"AI is an powerfull tool"
+#}     
 
-try:
-   delete_notes_by_id(3)
-except NoteNotFoundError as e:
-   print(e)
+#try:
+#   delete_notes_by_id(3)
+#except NoteNotFoundError as e:
+#   print(e)
 #save_notes(notes)
+
+#load_notes
 
 
