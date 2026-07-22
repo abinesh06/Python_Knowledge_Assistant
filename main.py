@@ -2,6 +2,7 @@ from note_operations import load_notes,add_note_flexible,save_notes,search_notes
 from exceptions import NoteNotFoundError
 
 
+
 def print_menu() -> None:
     """Display the main menu options."""
     print("\n--- Personal Knowledge Assistant ---")
@@ -58,5 +59,6 @@ def main():
 
 if __name__=="__main__":
     main()
+
 
 
