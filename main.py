@@ -1,5 +1,5 @@
 from note_operations import load_notes,add_note_flexible,save_notes,search_notes,delete_notes_by_id
-from exceptions import NoteNotFoundError
+from exceptions import NoteNotFoundError, NoteError, DuplicateNoteError
 
 
 
@@ -25,9 +25,15 @@ def main():
         if choice=="1":
             title=input("Title: ").strip()
             text=input("Text: ").strip()
-            added_notes=add_note_flexible(notes,title,text)
-            save_notes(added_notes)
-            print("Notes Added")
+
+            try:
+                added_notes=add_note_flexible(notes,title,text)
+                save_notes(added_notes)
+                print("Notes Added")
+
+            except  NoteError as e:
+                print(f"Error: {e}")
+            
         
         elif choice=="2":
             print("Please find the List of Notes")

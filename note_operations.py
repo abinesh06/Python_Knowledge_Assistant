@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from exceptions import NoteNotFoundError
+from exceptions import NoteNotFoundError, DuplicateNoteError
 
 NOTES_FILE = Path("data/notes.json")
 
@@ -19,14 +19,17 @@ def save_notes(notes:list) -> None:
        json.dump(notes,f,indent=2)
 
 def add_note_flexible(notes,title,text, **extra_fields) ->list:
-    note={        
+   if any(n["title"].lower() == title.lower() for n in notes):
+        raise DuplicateNoteError(f"Note with title '{title}' already exists")
+
+   note={        
         "id":len(notes)+1,
         "title":title,
         "text":text
         }
-    note.update(extra_fields)
-    notes.append(note)
-    return notes
+   note.update(extra_fields)
+   notes.append(note)
+   return notes
 
 def delete_notes_by_id(noteId: int,notes : list) -> list:
     """Delete the Notes by it's Id"""

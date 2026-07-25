@@ -34,24 +34,25 @@ class NoteStore:
             return True
         return False
 
-store = NoteStore()
-store.add(1, "Groceries", "milk, eggs, bread")
-store.add(2, "Workout", "leg day", tags=["fitness"])
-
-found = store.find("Workout")
-print(found.text)
-
-missing = store.find("Nonexistent")
-print(missing)
-
-deleted = store.delete("Groceries")
-print(deleted)
-print(len(store.notes))
-
-deleted_again = store.delete("Groceries")
-print(deleted_again)  
-
 #store = NoteStore()
+#store.add(1, "Groceries", "milk, eggs, bread")
+#store.add(2, "Workout", "leg day", tags=["fitness"])
+
+#found = store.find("Workout")
+#print(found.text)
+
+#missing = store.find("Nonexistent")
+#print(missing)
+
+#deleted = store.delete("Groceries")
+#print(deleted)
+#print(len(store.notes))
+
+#deleted_again = store.delete("Groceries")
+#print(deleted_again)  
+
+store = NoteStore()
+print(store)
 #store.add(1,"Groceries", "milk, eggs, bread")
 #store.add(2,"Workout", "leg day", tags=["fitness"])
 #store.add(3,"Workout", "Arm day", tags=["fitness"])
