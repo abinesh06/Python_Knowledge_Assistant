@@ -1,5 +1,5 @@
-from dataclass import Note
-from exceptions import DuplicateNoteError, NoteNotFoundError
+from pka.data_class import Note
+from pka.exceptions import DuplicateNoteError, NoteNotFoundError
 
 class NoteStore:
     def __init__(self, notes: list["Note"] = None):
