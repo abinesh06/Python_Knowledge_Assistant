@@ -11,6 +11,10 @@ class InvalidNoteError(NoteError):
     """Raise an Exception when invalid data is passed"""
     pass 
 
+class DuplicateNoteError(NoteError):
+    """Raise an Exception when a note with the same title already exists"""
+    pass
+
 def validate_notes(title: str, text : str):
     """Validate the Notes content and raise an exception"""
     if not title or not title.strip():
