@@ -1,5 +1,6 @@
 from pka.data_class import Note
 from pka.exceptions import DuplicateNoteError, NoteNotFoundError
+from pka.text_utills import chunk_text
 
 class NoteStore:
     def __init__(self, notes: list["Note"] = None):
@@ -23,7 +24,18 @@ class NoteStore:
             if keyword_lower==x.title.lower() or keyword_lower==x.text.lower()
 
         ]
+    
+    def _find_by_id(self, note_id: int) -> Note:
+        """
+        Internal helper: returns the note with the given id.
+        Raises NoteNotFoundError if no such note exists.
+        """
+        note = next((n for n in self.notes if n.id == note_id), None)
+        if note is None:
+            raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
+        return note
 
+    
     def find(self, title: str) -> Note | None:
         """Returns the first note with an exact title match, or None."""
         title_lower = title.lower()
@@ -42,7 +54,7 @@ class NoteStore:
 
     def delete_by_id(self, note_id: int) -> None:
         """Deletes the note with the given id. Raises NoteNotFoundError if not found."""
-        note = next((n for n in self.notes if n.id == note_id), None)
+        note = self._find_by_id(note_id)
         if note is None:
             raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
         self.notes.remove(note)
@@ -53,6 +65,17 @@ class NoteStore:
 
     def __str__(self):
         return f"[{self.notes}]"
+
+    def get_note_chunks(self, note_id: int, max_chunk_size: int = 200, overlap: int = 1) -> list[str]:
+        """
+        Retrieve a note by id and return its text split into
+        overlapping sentence-based chunks. Raises NoteNotFoundError
+        if no note with that id exists.
+        """
+        note = self._find_by_id(note_id)
+        if note is None:
+            raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
+        return chunk_text(note.text, max_chunk_size=max_chunk_size, overlap=overlap)
 
 #store = NoteStore()
 #store.add(1, "Groceries", "milk, eggs, bread")

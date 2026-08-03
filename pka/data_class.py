@@ -35,14 +35,14 @@ class Note:
 
 
         
-n1=Note(1,"AI","AI is powerfull")
-n2=Note(2,"AI 2","AI 2 is powerfull")
+#n1=Note(1,"AI","AI is powerfull")
+#n2=Note(2,"AI 2","AI 2 is powerfull")
 
-n1.tags.append("helo I am a tag")
+#n1.tags.append("helo I am a tag")
 
 #print(n1)
 #print(n2)
 
-data = {"id": 2, "title": "Meeting", "text": "Standup at 10am"}
-n3 = Note.from_dict(data)
+#data = {"id": 2, "title": "Meeting", "text": "Standup at 10am"}
+#n3 = Note.from_dict(data)
 #print(n3)

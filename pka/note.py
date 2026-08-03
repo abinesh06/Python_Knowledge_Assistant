@@ -22,7 +22,7 @@ class Note:
        # print("Classmethod calling")
         return cls(data["id"],data["title"],data["text"])
     
-n = Note(1, "Groceries", "milk, eggs")
-print(n)          # uses __str__
-print([n])        # uses __repr__ (inside a list)
-print(repr(n))    # uses __repr__ directly
+#n = Note(1, "Groceries", "milk, eggs")
+#print(n)          # uses __str__
+#print([n])        # uses __repr__ (inside a list)
+#print(repr(n))    # uses __repr__ directly
