@@ -1,7 +1,4 @@
-from dataclass import Note
-from notestoreclass import NoteStore
-from note_operations import load_notes, save_notes
-from exceptions import NoteNotFoundError, NoteError, DuplicateNoteError
+from pka import Note, NoteStore, load_notes, save_notes, NoteNotFoundError, NoteError, DuplicateNoteError
 
 
 def print_menu() -> None:

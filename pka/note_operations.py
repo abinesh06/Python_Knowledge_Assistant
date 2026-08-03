@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from exceptions import NoteNotFoundError, DuplicateNoteError
+from pka.exceptions import NoteNotFoundError, DuplicateNoteError
 
 NOTES_FILE = Path("data/notes.json")
 
