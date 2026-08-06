@@ -83,6 +83,14 @@ class NoteStore:
             raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
         return chunk_text(note.text, max_chunk_size=max_chunk_size, overlap=overlap)
 
+    def paginated_notes(self, page_size: int = 3):
+        """
+        The generator way: yields ONE page at a time, computed on demand.
+        """
+        for i in range(0, len(self.notes), page_size):
+            page = self.notes[i:i + page_size]  # slice out one page
+            yield page  # hand back this page, then PAUSE here
+
 #store = NoteStore()
 #store.add(1, "Groceries", "milk, eggs, bread")
 #store.add(2, "Workout", "leg day", tags=["fitness"])

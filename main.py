@@ -36,8 +36,22 @@ def main():
 
         elif choice=="2":
             print("Please find the List of Notes")
-            for n in store.notes:
-                print(n)
+
+            page_size = 3  # how many notes to show per page — adjust as you like
+            if not store.notes:
+                print("No notes found.")
+            else:
+                for page_num, page in enumerate(store.paginated_notes(page_size=page_size), start=1):
+                    print(f"\n--- Page {page_num} ---")
+                    for n in page:
+                        print(n)
+
+                    # Ask the user before fetching the NEXT page — this is where the
+                    # generator's laziness actually pays off: the next page isn't
+                    # computed until the user says yes.
+                    see_more = input("\nShow next page? (y/n): ").strip().lower()
+                    if see_more != "y":
+                        break
 
         elif choice=="3":
             keyword=input("Enter the Keyword: ").strip()

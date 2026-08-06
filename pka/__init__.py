@@ -11,3 +11,4 @@ from pka.text_utills import (
     chunk_text,
 )
 from pka.decorators import log_calls
+from pka.persistance import safe_write
