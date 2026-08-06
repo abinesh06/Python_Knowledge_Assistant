@@ -1,22 +1,29 @@
-from pka import NoteStore
+"""
+Scratch/test file for trying out NoteStore.paginated_notes().
+This does NOT touch data/notes.json — we build sample notes in memory only.
+"""
 
-# Create a fresh store and add a note with several sentences
+from pka import NoteStore, Note
+
+# 1. Create a fresh, empty NoteStore — no loading from the real notes.json.
+#    This keeps our test data isolated from your actual project notes.
 store = NoteStore()
-store.add(
-    title="Sprint Planning",
-    text="Sarah owns backend. Raj owns API integration. We ship by Friday. QA starts Monday. Retro is next Wednesday.",
-    tags=["work", "sprint"]
-)
 
-# The note we just added should have id=1 (first note, since max() on empty list defaults to 0, +1)
-chunks = store.get_note_chunks(note_id=1, max_chunk_size=40, overlap=1)
+# 2. Manually add some dummy notes directly into memory for testing.
+#    Adjust this loop to match whatever your NoteStore.add() signature actually is —
+#    e.g. store.add(title=..., content=..., tags=...)
+for i in range(1, 11):  # creates 10 dummy notes
+    store.add(title=f"Note {i}", text=f"This is the content of note {i}")
 
-for i, c in enumerate(chunks):
-    print(f"Chunk {i}: {c!r}")
+# 3. Confirm we actually have 10 notes loaded before testing pagination.
+print(f"Total notes loaded: {len(store.notes)}")
+print("-" * 40)
 
-# Also confirm the error path — asking for a note id that doesn't exist
-print("\n--- Testing error case ---")
-try:
-    store.get_note_chunks(note_id=99)
-except Exception as e:
-    print(f"Caught expected error: {type(e).__name__}: {e}")
+# 4. Loop over the generator directly using enumerate().
+#    enumerate(iterable, start=1) gives us (page_number, page) pairs,
+#    starting the count at 1 instead of the default 0 — just for nicer display.
+for page_num, page in enumerate(store.paginated_notes(page_size=3), start=1):
+    print(f"--- Page {page_num} ---")
+    for note in page:
+        print(note)
+    print()  # blank line between pages for readability

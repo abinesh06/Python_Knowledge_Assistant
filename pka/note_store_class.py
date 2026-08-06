@@ -1,12 +1,13 @@
 from pka.data_class import Note
 from pka.exceptions import DuplicateNoteError, NoteNotFoundError
 from pka.text_utills import chunk_text
+from pka.decorators import log_calls, timed
 
 class NoteStore:
     def __init__(self, notes: list["Note"] = None):
         self.notes: list["Note"] = notes or []
 
-
+    @log_calls(level="DEBUG")
     def add(self,title: str, text: str, tags : list[str]=None ) -> Note :
         if any(n.title.lower() == title.lower() for n in self.notes):
             raise DuplicateNoteError(f"Note with title '{title}' already exists")
@@ -15,7 +16,9 @@ class NoteStore:
         n = Note(id=new_id, title=title, text=text, tags=tags or [])
         self.notes.append(n)
         return n
-
+    
+    @log_calls(level="INFO")
+    @timed
     def search_notes(self,keyword : str) -> Note | None :
         """returns all the matches if the keyword in Title or text"""    
         keyword_lower=keyword.lower()
@@ -24,7 +27,8 @@ class NoteStore:
             if keyword_lower==x.title.lower() or keyword_lower==x.text.lower()
 
         ]
-    
+
+    @log_calls(level="DEBUG")
     def _find_by_id(self, note_id: int) -> Note:
         """
         Internal helper: returns the note with the given id.
@@ -35,7 +39,7 @@ class NoteStore:
             raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
         return note
 
-    
+    @log_calls(level="INFO")
     def find(self, title: str) -> Note | None:
         """Returns the first note with an exact title match, or None."""
         title_lower = title.lower()
@@ -44,6 +48,7 @@ class NoteStore:
                 return n
         return None
 
+    @log_calls(level="DEBUG")
     def delete(self, title: str) -> bool:
         """Deletes the note with the given exact title. Returns True if deleted, False if not found."""
         note = self.find(title)
@@ -52,6 +57,7 @@ class NoteStore:
             return True
         return False
 
+    @log_calls(level="DEBUG")
     def delete_by_id(self, note_id: int) -> None:
         """Deletes the note with the given id. Raises NoteNotFoundError if not found."""
         note = self._find_by_id(note_id)
@@ -76,6 +82,14 @@ class NoteStore:
         if note is None:
             raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
         return chunk_text(note.text, max_chunk_size=max_chunk_size, overlap=overlap)
+
+    def paginated_notes(self, page_size: int = 3):
+        """
+        The generator way: yields ONE page at a time, computed on demand.
+        """
+        for i in range(0, len(self.notes), page_size):
+            page = self.notes[i:i + page_size]  # slice out one page
+            yield page  # hand back this page, then PAUSE here
 
 #store = NoteStore()
 #store.add(1, "Groceries", "milk, eggs, bread")

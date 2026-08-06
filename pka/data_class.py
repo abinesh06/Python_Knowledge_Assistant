@@ -11,7 +11,7 @@ class Note:
     created_on: str = field(default="",init=False)
 
     def __post_init__(self):
-        print("Calling Post Init")
+        #print("Calling Post Init")
         if not self.created_on:
             self.created_on=datetime.now().isoformat()
 

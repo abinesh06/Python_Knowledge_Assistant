@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from pka.exceptions import NoteNotFoundError, DuplicateNoteError
+from pka.persistance import safe_write
 
 NOTES_FILE = Path("data/notes.json")
 
@@ -14,8 +15,8 @@ def load_notes() -> list :
       return []
 
 def save_notes(notes:list) -> None:
-  
-    with open(NOTES_FILE,"w") as f:
+    #print(NOTES_FILE)
+    with safe_write(NOTES_FILE) as f:
        json.dump(notes,f,indent=2)
 
 def add_note_flexible(notes,title,text, **extra_fields) ->list:
