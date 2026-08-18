@@ -2,31 +2,81 @@ from pka.data_class import Note
 from pka.exceptions import DuplicateNoteError, NoteNotFoundError
 from pka.text_utills import chunk_text
 from pka.decorators import log_calls, timed
+from pka.models import NoteModel
+from pka.db import Session
+from datetime import datetime  # add this import at the top
 
 class NoteStore:
-    def __init__(self, notes: list["Note"] = None):
-        self.notes: list["Note"] = notes or []
+    def __init__(self):
+        pass
+
+
 
     @log_calls(level="DEBUG")
-    def add(self,title: str, text: str, tags : list[str]=None ) -> Note :
-        if any(n.title.lower() == title.lower() for n in self.notes):
-            raise DuplicateNoteError(f"Note with title '{title}' already exists")
+    def add(self, title: str, text: str, tags: list[str] = None) -> Note:
+        session = Session()
+        try:
+            existing = (
+                session.query(NoteModel)
+                .filter(NoteModel.title.ilike(title))
+                .first()
+            )
+            if existing is not None:
+                raise DuplicateNoteError(f"Note with title '{title}' already exists")
 
-        new_id = max((n.id for n in self.notes), default=0) + 1
-        n = Note(id=new_id, title=title, text=text, tags=tags or [])
-        self.notes.append(n)
-        return n
+            tags_str = ",".join(tags) if tags else None
+            created_on = datetime.now().isoformat()
+
+            note_row = NoteModel(
+                title=title,
+                text=text,
+                tags=tags_str,
+                created_on=created_on,
+            )
+            session.add(note_row)
+            session.commit()
+
+            return Note(
+                id=note_row.id,
+                title=note_row.title,
+                text=note_row.text,
+                tags=tags or [],
+            )
+
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     
     @log_calls(level="INFO")
     @timed
-    def search_notes(self,keyword : str) -> Note | None :
-        """returns all the matches if the keyword in Title or text"""    
-        keyword_lower=keyword.lower()
-        return [
-            x for x in self.notes 
-            if keyword_lower==x.title.lower() or keyword_lower==x.text.lower()
+    def search_notes(self, keyword: str) -> list[Note]:
+        """Returns all notes where the keyword appears anywhere in Title or Text."""
+        session = Session()
+        try:
+            pattern = f"%{keyword}%"
+            rows = (
+                session.query(NoteModel)
+                .filter(
+                    (NoteModel.title.ilike(pattern)) |
+                    (NoteModel.text.ilike(pattern))
+                )
+                .all()
+            )
 
-        ]
+            return [
+                Note(
+                    id=row.id,
+                    title=row.title,
+                    text=row.text,
+                    tags=row.tags.split(",") if row.tags else [],
+                )
+                for row in rows
+            ]
+        finally:
+            session.close()
 
     @log_calls(level="DEBUG")
     def _find_by_id(self, note_id: int) -> Note:
@@ -34,36 +84,83 @@ class NoteStore:
         Internal helper: returns the note with the given id.
         Raises NoteNotFoundError if no such note exists.
         """
-        note = next((n for n in self.notes if n.id == note_id), None)
-        if note is None:
-            raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
-        return note
+        session = Session()
+        try:
+            row = session.get(NoteModel, note_id)
+            if row is None:
+                raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
+
+            tags_list = row.tags.split(",") if row.tags else []
+            return Note(
+                id=row.id,
+                title=row.title,
+                text=row.text,
+                tags=tags_list,
+            )
+        finally:
+            session.close()
 
     @log_calls(level="INFO")
     def find(self, title: str) -> Note | None:
         """Returns the first note with an exact title match, or None."""
-        title_lower = title.lower()
-        for n in self.notes:
-            if n.title.lower() == title_lower:
-                return n
-        return None
+        session = Session()
+        try:
+            row = (
+                session.query(NoteModel)
+                .filter(NoteModel.title.ilike(title))
+                .first()
+            )
+            if row is None:
+                return None
+
+            tags_list = row.tags.split(",") if row.tags else []
+            return Note(
+                id=row.id,
+                title=row.title,
+                text=row.text,
+                tags=tags_list,
+            )
+        finally:
+            session.close()
 
     @log_calls(level="DEBUG")
     def delete(self, title: str) -> bool:
         """Deletes the note with the given exact title. Returns True if deleted, False if not found."""
-        note = self.find(title)
-        if note:
-            self.notes.remove(note)
+        session = Session()
+        try:
+            row = (
+                session.query(NoteModel)
+                .filter(NoteModel.title.ilike(title))
+                .first()
+            )
+            if row is None:
+                return False
+
+            session.delete(row)
+            session.commit()
             return True
-        return False
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     @log_calls(level="DEBUG")
     def delete_by_id(self, note_id: int) -> None:
         """Deletes the note with the given id. Raises NoteNotFoundError if not found."""
-        note = self._find_by_id(note_id)
-        if note is None:
-            raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
-        self.notes.remove(note)
+        session = Session()
+        try:
+            row = session.get(NoteModel, note_id)
+            if row is None:
+                raise NoteNotFoundError(f"No Notes found with the ID:{note_id}")
+
+            session.delete(row)
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def to_list(self) -> list[dict]:
         """Convert all Note objects back into plain dicts, for JSON saving."""
@@ -87,9 +184,34 @@ class NoteStore:
         """
         The generator way: yields ONE page at a time, computed on demand.
         """
-        for i in range(0, len(self.notes), page_size):
-            page = self.notes[i:i + page_size]  # slice out one page
-            yield page  # hand back this page, then PAUSE here
+        session = Session()
+        try:
+            offset = 0
+            while True:
+                rows = (
+                    session.query(NoteModel)
+                    .order_by(NoteModel.id)
+                    .limit(page_size)
+                    .offset(offset)
+                    .all()
+                )
+                if not rows:
+                    break
+
+                page = [
+                    Note(
+                        id=row.id,
+                        title=row.title,
+                        text=row.text,
+                        tags=row.tags.split(",") if row.tags else [],
+                    )
+                    for row in rows
+                ]
+                yield page
+
+                offset += page_size
+        finally:
+            session.close()
 
 #store = NoteStore()
 #store.add(1, "Groceries", "milk, eggs, bread")
