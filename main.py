@@ -1,4 +1,4 @@
-from pka import Note, NoteStore, load_notes, save_notes, NoteNotFoundError, NoteError, DuplicateNoteError
+from pka import Note, NoteStore, NoteNotFoundError, NoteError, DuplicateNoteError
 
 
 def print_menu() -> None:
@@ -12,8 +12,7 @@ def print_menu() -> None:
 
 
 def main():
-    raw_notes = load_notes()
-    store = NoteStore([Note.from_dict(d) for d in raw_notes])
+    store = NoteStore()
 
     while True:
 
@@ -27,7 +26,7 @@ def main():
 
             try:
                 store.add(title=title,text= text)
-                save_notes(store.to_list())
+                #save_notes(store.to_list())
                 print("Notes Added")
 
             except NoteError as e:
@@ -37,21 +36,21 @@ def main():
         elif choice=="2":
             print("Please find the List of Notes")
 
-            page_size = 3  # how many notes to show per page — adjust as you like
-            if not store.notes:
-                print("No notes found.")
-            else:
-                for page_num, page in enumerate(store.paginated_notes(page_size=page_size), start=1):
-                    print(f"\n--- Page {page_num} ---")
-                    for n in page:
-                        print(n)
+            page_size = 3
+            found_any = False
 
-                    # Ask the user before fetching the NEXT page — this is where the
-                    # generator's laziness actually pays off: the next page isn't
-                    # computed until the user says yes.
-                    see_more = input("\nShow next page? (y/n): ").strip().lower()
-                    if see_more != "y":
-                        break
+            for page_num, page in enumerate(store.paginated_notes(page_size=page_size), start=1):
+                found_any = True
+                print(f"\n--- Page {page_num} ---")
+                for n in page:
+                    print(n)
+
+                see_more = input("\nShow next page? (y/n): ").strip().lower()
+                if see_more != "y":
+                    break
+
+            if not found_any:
+                print("No notes found.")
 
         elif choice=="3":
             keyword=input("Enter the Keyword: ").strip()
@@ -64,7 +63,7 @@ def main():
             note_id=input("Enter the Note ID: ").strip()
             try:
                 store.delete_by_id(int(note_id))
-                save_notes(store.to_list())
+                #save_notes(store.to_list())
                 print("Note Deleted")
             except NoteNotFoundError as e:
                 print(e)
