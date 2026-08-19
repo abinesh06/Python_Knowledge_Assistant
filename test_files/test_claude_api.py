@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from anthropic import Anthropic
 
 # Load variables from .env into the environment
-load_dotenv()
+load_dotenv(override=True)
 
 # Client auto-detects ANTHROPIC_API_KEY from the environment - no need to pass it manually
 client = Anthropic()
