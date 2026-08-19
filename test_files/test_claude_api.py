@@ -2,12 +2,12 @@ from dotenv import load_dotenv
 from anthropic import Anthropic
 
 # Load variables from .env into the environment
-# override=True so .env wins over any ANTHROPIC_API_KEY already set at the OS level
-load_dotenv(override=True)
+load_dotenv()
 
 # Client auto-detects ANTHROPIC_API_KEY from the environment - no need to pass it manually
 client = Anthropic()
 
+print(client.api_key)
 response = client.messages.create(
     model="claude-sonnet-4-6",
     max_tokens=200,
