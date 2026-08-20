@@ -7,6 +7,7 @@ never has to know about request/response shapes or the API key directly.
 import os
 from dotenv import load_dotenv
 from anthropic import Anthropic
+from pka.decorators import retry, log_calls, timed
 
 # Load environment variables (ANTHROPIC_API_KEY) from .env
 load_dotenv(override=True)
@@ -18,7 +19,9 @@ client = Anthropic()
 MODEL = "claude-sonnet-4-5"
 
 
-
+@retry(max_attempts=3, backoff_base=1)
+@timed
+@log_calls()
 def summarize_note(note_content: str) -> str:
     """
     Send a note's content to Claude and return a concise summary.
@@ -53,6 +56,10 @@ def summarize_note(note_content: str) -> str:
     return response.content[0].text
 
 
+
+@retry(max_attempts=3, backoff_base=1)
+@timed
+@log_calls()
 def ask_note(note_content: str, question: str) -> str:
     """
     Answer a question about a note's content using Claude.

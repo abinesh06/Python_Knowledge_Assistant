@@ -11,3 +11,4 @@ from pka.text_utills import (
 )
 from pka.decorators import log_calls
 from pka.persistance import safe_write
+from pka.llm_client import summarize_note, ask_note

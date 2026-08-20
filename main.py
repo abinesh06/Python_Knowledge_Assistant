@@ -1,4 +1,5 @@
-from pka import Note, NoteStore, NoteNotFoundError, NoteError, DuplicateNoteError
+from pka import Note, NoteStore, NoteNotFoundError, NoteError, DuplicateNoteError, summarize_note, ask_note
+from anthropic import APIError
 
 
 def print_menu() -> None:
@@ -8,7 +9,9 @@ def print_menu() -> None:
     print("2. View all notes")
     print("3. Search notes")
     print("4. Delete note")
-    print("5. Exit")
+    print("5. Summarize a note")
+    print("6. Ask about a note")
+    print("7. Exit")
 
 
 def main():
@@ -18,7 +21,7 @@ def main():
 
         print_menu()
 
-        choice=input("Choose Option (1-5): ").strip()
+        choice=input("Choose Option (1-7): ").strip()
 
         if choice=="1":
             title=input("Title: ").strip()
@@ -68,13 +71,43 @@ def main():
             except NoteNotFoundError as e:
                 print(e)
 
-
         elif choice=="5":
+            note_id=input("Enter the Note ID to summarize: ").strip()
+            try:
+                note = store.get_by_id(int(note_id))
+                summary = summarize_note(note.text)
+                print("\n--- Summary ---")
+                print(summary)
+            except NoteNotFoundError as e:
+                print(e)
+            except ValueError as e:
+                print(f"Error: {e}")
+            except APIError as e:
+                print(f"Claude API error: {e}")
+
+        elif choice=="6":
+            note_id=input("Enter the Note ID to ask about: ").strip()
+            question=input("Your question: ").strip()
+            try:
+                note = store.get_by_id(int(note_id))
+                answer = ask_note(note.text, question)
+                print("\n--- Answer ---")
+                print(answer)
+            except NoteNotFoundError as e:
+                print(e)
+            except ValueError as e:
+                print(f"Error: {e}")
+            except APIError as e:
+                print(f"Claude API error: {e}")
+
+
+        
+        elif choice=="7":
             print("Goodbye !!!!")
             break
 
         else:
-            print("Invalid Choice - Please Enter 1 - 5")
+            print("Invalid Choice - Please Enter 1 - 7")
 
 
 if __name__=="__main__":

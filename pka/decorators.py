@@ -7,6 +7,7 @@ Decorators used across NoteStore to add cross-cutting behavior
 
 import functools
 import time
+import anthropic
 
 
 def log_calls(level="INFO"):
@@ -48,3 +49,27 @@ def timed(func):
         print(f"⏱ {func.__name__}() took {elapsed:.4f}s")
         return result
     return wrapper
+
+
+def retry(max_attempts: int = 3, backoff_base: float = 1.0):
+    """Retry a function on transient Claude API errors, with exponential backoff."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            attempt = 1
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except (anthropic.RateLimitError,
+                        anthropic.APITimeoutError,
+                        anthropic.APIConnectionError) as e:
+                    if attempt >= max_attempts:
+                        raise  # out of attempts, let it fail for real
+                    wait = backoff_base * (2 ** (attempt - 1))
+                    print(f"[retry] {func.__name__} failed "
+                          f"({e.__class__.__name__}), attempt {attempt}/{max_attempts}. "
+                          f"Retrying in {wait}s...")
+                    time.sleep(wait)
+                    attempt += 1
+        return wrapper
+    return decorator

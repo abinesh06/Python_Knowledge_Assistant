@@ -1,19 +1,12 @@
-from dotenv import load_dotenv
-from anthropic import Anthropic
+from pka.llm_client import ask_note
 
-# Load variables from .env into the environment
-# override=True so .env wins over any ANTHROPIC_API_KEY already set at the OS level
-load_dotenv(override=True)
+text = """
+Appian's SAIL forms use a declarative syntax to define UI components.
+Unlike imperative UI frameworks, you describe what the form should look like
+based on data, and Appian handles re-rendering when that data changes.
+This is conceptually similar to React's declarative component model.
+"""
 
-# Client auto-detects ANTHROPIC_API_KEY from the environment - no need to pass it manually
-client = Anthropic()
-
-response = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=200,
-    messages=[
-        {"role": "user", "content": "In one sentence, what does a REST API do?"}
-    ]
-)
-
-print(response)
+print(ask_note(text, "What frontend framework is SAIL compared to?"))
+print("---")
+print(ask_note(text, "What version of Appian introduced SAIL?"))
