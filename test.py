@@ -1,18 +1,12 @@
+from pka.llm_client import ask_note
+
+text = """
+Appian's SAIL forms use a declarative syntax to define UI components.
+Unlike imperative UI frameworks, you describe what the form should look like
+based on data, and Appian handles re-rendering when that data changes.
+This is conceptually similar to React's declarative component model.
 """
-Quick manual test for NoteStore.add() writing to SQLite.
-Run this directly: python test_add.py
-"""
-from pka.note_store_class import NoteStore
-from pka.db import Session
-from pka.models import NoteModel
-from pka.exceptions import DuplicateNoteError, NoteNotFoundError
 
-store = NoteStore()
-
-print("\n--- Test 16: search_notes() substring match ---")
-results = store.search_notes("work")
-print(f"Results: {[n.title for n in results]}")
-
-print("\n--- Test 17: search_notes() no match ---")
-results2 = store.search_notes("zzz_nomatch")
-print(f"Results (should be empty): {results2}")
+print(ask_note(text, "What frontend framework is SAIL compared to?"))
+print("---")
+print(ask_note(text, "What version of Appian introduced SAIL?"))

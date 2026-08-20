@@ -213,6 +213,14 @@ class NoteStore:
         finally:
             session.close()
 
+
+
+    @log_calls(level="DEBUG")
+    def get_by_id(self, note_id: int) -> Note:
+        """Public lookup: returns the note with the given id.
+        Raises NoteNotFoundError if no such note exists."""
+        return self._find_by_id(note_id)
+
 #store = NoteStore()
 #store.add(1, "Groceries", "milk, eggs, bread")
 #store.add(2, "Workout", "leg day", tags=["fitness"])
