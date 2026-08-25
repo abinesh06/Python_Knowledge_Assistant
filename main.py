@@ -1,5 +1,8 @@
 from pka import Note, NoteStore, NoteNotFoundError, NoteError, DuplicateNoteError, summarize_note, ask_note
 from anthropic import APIError
+from pka.logging_config import setup_logging
+
+setup_logging(level="INFO")
 
 
 def print_menu() -> None:

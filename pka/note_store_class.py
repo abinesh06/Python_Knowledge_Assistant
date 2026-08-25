@@ -7,14 +7,14 @@ from pka.db import Session
 from datetime import datetime  # add this import at the top
 
 class NoteStore:
-    def __init__(self):
-        pass
+    def __init__(self, session_factory=Session):
+        self.session_factory = session_factory
 
 
 
-    @log_calls(level="DEBUG")
+    @log_calls(level="INFO")
     def add(self, title: str, text: str, tags: list[str] = None) -> Note:
-        session = Session()
+        session = self.session_factory()
         try:
             existing = (
                 session.query(NoteModel)
@@ -54,7 +54,7 @@ class NoteStore:
     @timed
     def search_notes(self, keyword: str) -> list[Note]:
         """Returns all notes where the keyword appears anywhere in Title or Text."""
-        session = Session()
+        session = self.session_factory()
         try:
             pattern = f"%{keyword}%"
             rows = (
@@ -84,7 +84,7 @@ class NoteStore:
         Internal helper: returns the note with the given id.
         Raises NoteNotFoundError if no such note exists.
         """
-        session = Session()
+        session = self.session_factory()
         try:
             row = session.get(NoteModel, note_id)
             if row is None:
@@ -103,7 +103,7 @@ class NoteStore:
     @log_calls(level="INFO")
     def find(self, title: str) -> Note | None:
         """Returns the first note with an exact title match, or None."""
-        session = Session()
+        session = self.session_factory()
         try:
             row = (
                 session.query(NoteModel)
@@ -126,7 +126,7 @@ class NoteStore:
     @log_calls(level="DEBUG")
     def delete(self, title: str) -> bool:
         """Deletes the note with the given exact title. Returns True if deleted, False if not found."""
-        session = Session()
+        session = self.session_factory()
         try:
             row = (
                 session.query(NoteModel)
@@ -148,7 +148,7 @@ class NoteStore:
     @log_calls(level="DEBUG")
     def delete_by_id(self, note_id: int) -> None:
         """Deletes the note with the given id. Raises NoteNotFoundError if not found."""
-        session = Session()
+        session = self.session_factory()
         try:
             row = session.get(NoteModel, note_id)
             if row is None:
@@ -184,7 +184,7 @@ class NoteStore:
         """
         The generator way: yields ONE page at a time, computed on demand.
         """
-        session = Session()
+        session = self.session_factory()
         try:
             offset = 0
             while True:
