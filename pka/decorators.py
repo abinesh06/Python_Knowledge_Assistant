@@ -8,51 +8,41 @@ Decorators used across NoteStore to add cross-cutting behavior
 import functools
 import time
 import anthropic
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def log_calls(level="INFO"):
     """
     Decorator factory: logs before/after a function call, at the given level.
-
-    Usage:
-        @log_calls(level="DEBUG")
-        def search(...): ...
-
-    Note: always call with parentheses, e.g. @log_calls() or
-    @log_calls(level="WARNING") — never bare @log_calls, since this
-    is a factory (Layer 1) that must run first to produce the real
-    decorator (Layer 2).
+    ...
     """
+    log_level = getattr(logging, level.upper())  # "INFO" -> logging.INFO (an int)
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            print(f"[{level}] Calling {func.__name__}()")
+            logger.log(log_level, "Calling %s()", func.__name__)
             result = func(*args, **kwargs)
-            print(f"[{level}] {func.__name__}() finished")
+            logger.log(log_level, "%s() finished", func.__name__)
             return result
         return wrapper
     return decorator
 
 
 def timed(func):
-    """
-    Decorator: prints how long a function took to execute.
-
-    Plain decorator (2 layers, no factory) since it takes no
-    configuration — nothing needs a separate resolution stage.
-    """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - start
-        print(f"⏱ {func.__name__}() took {elapsed:.4f}s")
+        logger.debug("%s() took %.4fs", func.__name__, elapsed)
         return result
     return wrapper
 
 
 def retry(max_attempts: int = 3, backoff_base: float = 1.0):
-    """Retry a function on transient Claude API errors, with exponential backoff."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -64,11 +54,16 @@ def retry(max_attempts: int = 3, backoff_base: float = 1.0):
                         anthropic.APITimeoutError,
                         anthropic.APIConnectionError) as e:
                     if attempt >= max_attempts:
-                        raise  # out of attempts, let it fail for real
+                        logger.error(
+                            "%s failed permanently after %d attempts (%s)",
+                            func.__name__, max_attempts, e.__class__.__name__,
+                        )
+                        raise
                     wait = backoff_base * (2 ** (attempt - 1))
-                    print(f"[retry] {func.__name__} failed "
-                          f"({e.__class__.__name__}), attempt {attempt}/{max_attempts}. "
-                          f"Retrying in {wait}s...")
+                    logger.warning(
+                        "%s failed (%s), attempt %d/%d. Retrying in %ss...",
+                        func.__name__, e.__class__.__name__, attempt, max_attempts, wait,
+                    )
                     time.sleep(wait)
                     attempt += 1
         return wrapper
