@@ -6,7 +6,7 @@ never has to know about request/response shapes or the API key directly.
 
 import os
 from dotenv import load_dotenv
-from anthropic import Anthropic
+from anthropic import Anthropic ,  AsyncAnthropic
 from pka.decorators import retry, log_calls, timed
 
 # Load environment variables (ANTHROPIC_API_KEY) from .env
@@ -15,6 +15,9 @@ load_dotenv(override=True)
 # Created once at import time, reused by every function in this module.
 # Mirrors a Connected System: configure the connection once, call it many times.
 client = Anthropic()
+
+# new async client — separate instance for async calls
+async_client = AsyncAnthropic()
 
 MODEL = "claude-sonnet-4-5"
 
@@ -91,6 +94,43 @@ def ask_note(note_content: str, question: str) -> str:
                     "information to answer, say so explicitly.\n\n"
                     f"Note:\n{note_content}\n\n"
                     f"Question: {question}"
+                ),
+            }
+        ],
+    )
+
+    return response.content[0].text
+
+
+
+async def summarize_note_async(note_content: str) -> str:
+    """
+    Async version of summarize_note(). No retry/timed/log_calls decorators
+    yet — those are sync-only and would silently misbehave on a coroutine.
+    Decorator fix is a separate, deferred task (flagged Week 8 start).
+
+    Args:
+        note_content: The raw text of the note to summarize.
+
+    Returns:
+        A plain-text summary string.
+
+    Raises:
+        ValueError: If note_content is empty or whitespace-only.
+    """
+    if not note_content or not note_content.strip():
+        raise ValueError("Cannot summarize empty note content.")
+
+    response = await async_client.messages.create(
+        model=MODEL,
+        max_tokens=300,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    "Summarize the following note in 2-3 concise sentences. "
+                    "Focus on the key points only.\n\n"
+                    f"Note:\n{note_content}"
                 ),
             }
         ],
